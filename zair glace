@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="theme-color" content="#111111"/>
+  <title>Zair Glace</title>
+  <style>
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+    body{background:#111;font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;overscroll-behavior:none}
+    #root{max-width:480px;margin:0 auto}
+    @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel">
+const { useState } = React;
+const SECRET_PIN = "1300";
+
+// ═══════════════════════ PIN ═══════════════════════
+function PinScreen({ onUnlock }) {
+  const [pin,setPin]     = useState("");
+  const [error,setError] = useState(false);
+  const [shake,setShake] = useState(false);
+
+  const press = (val) => {
+    if (pin.length >= 4) return;
+    const next = pin + val;
+    setPin(next);
+    setError(false);
+    if (next.length === 4) {
+      if (next === SECRET_PIN) {
+        setTimeout(() => onUnlock(), 180);
+      } else {
+        setTimeout(() => {
+          setShake(true); setError(true);
+          setTimeout(() => { setPin(""); setShake(false); }, 700);
+        }, 120);
+      }
+    }
+  };
+  const del = () => { setPin(p => p.slice(0,-1)); setError(false); };
+  const KEYS = [["1","2","3"],["4","5","6"],["7","8","9"],["","0","⌫"]];
+
+  return (
+    <div style={{background:"#111",minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24}}>
+      <div style={{textAlign:"center",marginBottom:40}}>
+        <div style={{fontSize:40,marginBottom:8}}>🍴</div>
+        <div style={{fontSize:28,fontWeight:900,color:"#fff",letterSpacing:1}}>ZAIR GLACE</div>
+        <div style={{fontSize:12,color:"#6b7280",marginTop:4,letterSpacing:2,textTransform:"uppercase"}}>Espace serveur</div>
+      </div>
+      <div style={{display:"flex",gap:16,marginBottom:36,animation:shake?"shake .5s ease":"none"}}>
+        {[0,1,2,3].map(i=>(
+          <div key={i} style={{width:18,height:18,borderRadius:"50%",
+            background:pin.length>i?(error?"#ef4444":"#e85d04"):"transparent",
+            border:`2px solid ${error?"#ef4444":pin.length>i?"#e85d04":"#444"}`,
+            transition:"background .15s,border-color .15s"}}/>
+        ))}
+      </div>
+      {error&&<div style={{color:"#ef4444",fontSize:13,fontWeight:600,marginBottom:20,marginTop:-20}}>Code incorrect</div>}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,width:"100%",maxWidth:280}}>
+        {KEYS.flat().map((k,i)=>{
+          if(k==="") return <div key={i}/>;
+          return(
+            <button key={i} onClick={()=>k==="⌫"?del():press(k)}
+              style={{height:68,borderRadius:16,fontSize:k==="⌫"?22:26,fontWeight:700,cursor:"pointer",border:"none",
+                background:k==="⌫"?"#1f1f1f":"#1a1a1a",color:k==="⌫"?"#9ca3af":"#fff"}}
+              onPointerDown={e=>e.currentTarget.style.background="#2a2a2a"}
+              onPointerUp={e=>e.currentTarget.style.background=k==="⌫"?"#1f1f1f":"#1a1a1a"}>
+              {k}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════ DONNÉES ═══════════════════════
+const MENU = {
+  Pizza:{emoji:"🍕",color:"#e85d04",
+    items:[
+      {id:"p1", name:"Margherita",    desc:"Champignons, Mozzarella, Olive",                           price:500 },
+      {id:"p2", name:"Spécial",       desc:"Poulet haché, Cheddar, Mozzarella",                        price:1000},
+      {id:"p3", name:"Végétarienne",  desc:"Poivron, Tomate, Oignon, Mozzarella",                      price:600 },
+      {id:"p4", name:"Champignons",   desc:"Champignons, Cheddar, Mozzarella",                         price:650 },
+      {id:"p5", name:"Thon",          desc:"Thon, Cheddar, Oignon, Mozzarella",                        price:700 },
+      {id:"p6", name:"Régina",        desc:"Viande hachée, Cheddar, Mozzarella",                       price:750 },
+      {id:"p7", name:"Flamme",        desc:"Poulet, Gruyère, Cheddar, Mozzarella, Olive",              price:850 },
+      {id:"p8", name:"Reine",         desc:"Viande fumée, Gruyère, Cheddar, Mozzarella",               price:850 },
+      {id:"p9", name:"Poulet",        desc:"Viande fumée, Gruyère, Cheddar, Mozzarella",               price:900 },
+      {id:"p10",name:"Cinq Fromages", desc:"Cheddar, Mozzarella, Camembert, Gruyère, Fromage du Chef", price:800 },
+      {id:"p11",name:"Le Chef",       desc:"Capricciosa, Fromage fumé, Olive, Composition du Chef",    price:1000},
+    ],
+    supplements:[
+      {id:"sp1",name:"Viande / Escalope",price:200},{id:"sp2",name:"Camembert",price:150},
+      {id:"sp3",name:"Gruyère",price:50},{id:"sp4",name:"Bordure Fromage",price:50},
+    ]},
+  Tacos:{emoji:"🌯",color:"#f4a261",
+    items:[
+      {id:"t1",name:"Algérien",  desc:"Poulet, Sauce fromage, Escalope, Frites, Gruyère",                      price:500},
+      {id:"t2",name:"Poulet",    desc:"Poulet, Sauce fromage, Escalope, Frites, Gruyère",                      price:550},
+      {id:"t3",name:"Viande",    desc:"Viande hachée, Sauce fromage",                                          price:600},
+      {id:"t4",name:"Mixte",     desc:"Poulet + Viande hachée, Sauce fromage, Frites, Gruyère",                price:650},
+      {id:"t5",name:"Crispy",    desc:"Fromage, Frites, Viande hachée, Sauce fromage, Camembert",              price:650},
+      {id:"t6",name:"Fromagère", desc:"Escalope, Poulet, Frites, Camembert, Gruyère, Sauce fromage, BB fumée", price:700},
+    ],
+    supplements:[{id:"st1",name:"Barquette Frites",price:100},{id:"st2",name:"Escalope / Poulet",price:100}]},
+  Sandwichs:{emoji:"🥖",color:"#e76f51",
+    items:[
+      {id:"s1",name:"Spécial", desc:"Poulet haché, Frites, Sauce maison, Camembert",                    price:250},
+      {id:"s2",name:"Power",   desc:"Poulet haché, Omelette fumée, Frites, Sauce maison",               price:350},
+      {id:"s3",name:"Marine",  desc:"Poulet, Sauce maison, Frites",                                     price:350},
+      {id:"s4",name:"Suprême", desc:"Sauce fromage, Frites",                                            price:400},
+      {id:"s5",name:"Crunchy", desc:"Escalope, Frites, Sauce fromage, Gruyère",                         price:450},
+      {id:"s6",name:"Buffalo", desc:"Viande hachée, Frites, Sauce fromage, Exclusif",                   price:450},
+      {id:"s7",name:"Mexicain",desc:"Poulet, Sauce mexicaine, Fromage",                                 price:450},
+      {id:"s8",name:"Mixte",   desc:"Poulet + Viande hachée, Frites, Sauce fromage",                    price:500},
+      {id:"s9",name:"Best",    desc:"Poulet + Viande hachée, Escalope, Sauce fromage, Frites, Gruyère", price:600},
+    ],supplements:[]},
+  Poutine:{emoji:"🍟",color:"#2a9d8f",
+    items:[
+      {id:"po1",name:"Poulet",   desc:"Poulet haché, Sauce fromage, Frites, Mozzarella, Gruyère",     price:550},
+      {id:"po2",name:"Délice",   desc:"Sauce fromage, Poulet, Gruyère, Mozzarella, Cheddar",          price:550},
+      {id:"po3",name:"Viande",   desc:"Viande hachée, Sauce fromage",                                 price:600},
+      {id:"po4",name:"Mixte",    desc:"Fromage, Poulet, Sauce fromage, Gruyère, Mozzarella, Cheddar", price:650},
+      {id:"po5",name:"Fromagino",desc:"Frites, Sauce fromage, BB viande fumée, Mozzarella",           price:700},
+    ],
+    supplements:[
+      {id:"spo1",name:"Viande / Escalope",price:200},{id:"spo2",name:"Camembert",price:100},
+      {id:"spo3",name:"Gruyère",price:100},{id:"spo4",name:"Barquette Frites",price:100},
+    ]},
+  Burgers:{emoji:"🍔",color:"#264653",
+    items:[
+      {id:"b1",name:"Algérien",      desc:"Poulet, Salade, Tomate, Sauce maison",                              price:250},
+      {id:"b2",name:"Algérien Plus", desc:"Poulet haché, Salade, Tomate, BB viande fumée, Sauce maison",      price:300},
+      {id:"b3",name:"Cheese",        desc:"Viande hachée, Salade, Tomate, Sauce maison, Gruyère",             price:400},
+      {id:"b4",name:"King",          desc:"Poulet fumé, Salade, Sauce maison",                                 price:500},
+    ],
+    supplements:[
+      {id:"sb1",name:"Dinde Fumée",price:100},{id:"sb2",name:"Barquette Frites",price:100},
+      {id:"sb3",name:"Gruyère",price:50},{id:"sb4",name:"Œuf",price:50},
+    ]},
+};
+
+const TABLES = Array.from({length:12},(_,i)=>i+1);
+const DA  = n=>`${Number(n).toLocaleString("fr-DZ")} DA`;
+const NOW = ()=>new Date().toLocaleString("fr-FR",{hour:"2-digit",minute:"2-digit",day:"2-digit",month:"2-digit",year:"numeric"});
+let orderCounter = 1;
+
+// ═══════════════════════ MENU SCREEN ═══════════════════════
+function MenuScreen({cartItems,onAdd,onDone}){
+  const [cat,setCat]   = useState("Pizza");
+  const [qtys,setQtys] = useState({});
+  const [sups,setSups] = useState({});
+  const [ok,setOk]     = useState({});
+  const C = MENU[cat];
+  const cartCount = cartItems.reduce((s,i)=>s+i.qty,0);
+  const cartTotal = cartItems.reduce((s,i)=>s+i.price*i.qty,0);
+  const qty = id=>qtys[id]||0;
+  const bump = (id,d)=>setQtys(p=>({...p,[id]:Math.max(0,(p[id]||0)+d)}));
+  const toggleSup = (iid,sup)=>setSups(p=>{const cur=p[iid]||[];return{...p,[iid]:cur.find(s=>s.id===sup.id)?cur.filter(s=>s.id!==sup.id):[...cur,sup]};});
+  const add = item=>{
+    const q=qty(item.id);if(!q)return;
+    const is=sups[item.id]||[];const se=is.reduce((s,x)=>s+x.price,0);
+    onAdd({...item,category:cat,qty:q,supplements:is.map(s=>s.name),price:item.price+se});
+    setOk(p=>({...p,[item.id]:true}));
+    setTimeout(()=>setOk(p=>({...p,[item.id]:false})),700);
+    setQtys(p=>({...p,[item.id]:0}));setSups(p=>({...p,[item.id]:[]}));
+  };
+  return(
+    <div style={{background:"#f8fafc",minHeight:"100vh",maxWidth:480,margin:"0 auto",display:"flex",flexDirection:"column"}}>
+      <div style={{background:"#fff",borderBottom:"1px solid #e5e7eb",padding:"12px 16px",position:"sticky",top:0,zIndex:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontWeight:900,fontSize:17,color:"#111"}}>Menu</span>
+            {cartCount>0&&<span style={{background:"#16a34a",color:"#fff",borderRadius:20,padding:"2px 10px",fontSize:12,fontWeight:800}}>🛒 {cartCount} article{cartCount>1?"s":""}</span>}
+          </div>
+          <button onClick={onDone} style={{background:"#111",color:"#fff",border:"none",borderRadius:10,padding:"9px 18px",fontWeight:800,fontSize:13,cursor:"pointer"}}>
+            Voir commande {cartCount>0&&`· ${DA(cartTotal)}`}
+          </button>
+        </div>
+        <div style={{display:"flex",gap:6,overflowX:"auto",scrollbarWidth:"none",paddingBottom:2}}>
+          {Object.entries(MENU).map(([name,data])=>(
+            <button key={name} onClick={()=>{setCat(name);setQtys({});setSups({});setOk({});}}
+              style={{whiteSpace:"nowrap",padding:"7px 14px",borderRadius:20,fontSize:13,fontWeight:700,cursor:"pointer",border:"none",flexShrink:0,
+                background:cat===name?MENU[cat].color:"#f3f4f6",color:cat===name?"#fff":"#374151"}}>
+              {data.emoji} {name}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"12px 16px 32px",display:"flex",flexDirection:"column",gap:10}}>
+        {C.items.map(item=>{
+          const q=qty(item.id),is=sups[item.id]||[],se=is.reduce((s,x)=>s+x.price,0),fl=ok[item.id];
+          return(
+            <div key={item.id} style={{borderRadius:14,overflow:"hidden",border:`2px solid ${fl?"#16a34a":q>0?C.color:"#e5e7eb"}`,background:fl?"#f0fdf4":q>0?C.color+"12":"#fff",transition:"border-color .18s,background .18s"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,padding:"13px 12px"}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:700,fontSize:14,color:"#111"}}>{item.name}</div>
+                  {item.desc&&<div style={{fontSize:11,color:"#9ca3af",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.desc}</div>}
+                  {is.length>0&&<div style={{fontSize:10,color:"#059669",fontWeight:600,marginTop:2}}>+ {is.map(s=>s.name).join(", ")}</div>}
+                </div>
+                <div style={{fontWeight:800,fontSize:13,color:C.color,flexShrink:0,whiteSpace:"nowrap"}}>{DA(item.price+se)}</div>
+                <div style={{display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
+                  {q>0&&<button onClick={()=>bump(item.id,-1)} style={{width:32,height:32,borderRadius:8,border:`2px solid ${C.color}`,background:"#fff",color:C.color,fontWeight:900,fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>−</button>}
+                  {q>0&&<span style={{fontWeight:900,fontSize:16,minWidth:22,textAlign:"center",color:"#111"}}>{q}</span>}
+                  <button onClick={()=>bump(item.id,1)} style={{width:32,height:32,borderRadius:8,border:"none",background:C.color,color:"#fff",fontWeight:900,fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>+</button>
+                </div>
+                {q>0&&<button onClick={()=>add(item)} style={{flexShrink:0,border:"none",borderRadius:9,padding:"9px 12px",fontWeight:800,fontSize:12,cursor:"pointer",whiteSpace:"nowrap",transition:"background .18s",background:fl?"#16a34a":"#111",color:"#fff"}}>{fl?"✓ Ajouté !":"✓ Ajouter"}</button>}
+              </div>
+              {q>0&&C.supplements.length>0&&(
+                <div style={{borderTop:`1.5px solid ${C.color}30`,padding:"10px 12px 13px",background:"#fafafa"}}>
+                  <div style={{fontSize:10,fontWeight:700,color:"#9ca3af",letterSpacing:1,textTransform:"uppercase",marginBottom:8}}>Suppléments</div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+                    {C.supplements.map(sup=>{const act=is.find(s=>s.id===sup.id);return(
+                      <button key={sup.id} onClick={()=>toggleSup(item.id,sup)}
+                        style={{padding:"7px 13px",borderRadius:9,fontSize:12,fontWeight:600,cursor:"pointer",transition:"all .15s",border:`1.5px solid ${act?C.color:"#e5e7eb"}`,background:act?C.color:"#fff",color:act?"#fff":"#374151"}}>
+                        {sup.name} <span style={{opacity:.7}}>+{DA(sup.price)}</span>
+                      </button>
+                    );})}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════ BON CUISINE ═══════════════════════
+function KitchenTicket({table,order,onClose}){
+  const print=()=>{
+    const w=window.open("","_blank","width=400,height=700");
+    w.document.write(`<html><head><title>Bon Table ${table}</title><style>body{font-family:'Courier New',monospace;font-size:13px;padding:16px}h1{text-align:center;font-size:18px;margin:0 0 4px}.c{text-align:center;font-size:11px;color:#555;margin-bottom:10px}hr{border:none;border-top:2px dashed #000;margin:8px 0}.row{display:flex;justify-content:space-between}.tag{display:inline-block;background:#000;color:#fff;padding:1px 7px;border-radius:4px;font-weight:bold;margin-right:5px}.tot{font-size:17px;font-weight:bold;text-align:right;margin-top:6px}</style></head><body><h1>🍴 ZAIR GLACE</h1><div class="c">BON DE COMMANDE</div><hr><div class="row"><b>TABLE ${table}</b><span>#${order.id} — ${NOW()}</span></div><hr>${order.items.map(i=>`<div style="margin-bottom:9px"><div><span class="tag">×${i.qty}</span><b>${i.name}</b>${i.category?` <span style="color:#888;font-size:11px">(${i.category})</span>`:""}</div>${i.supplements?.length?`<div style="font-size:11px;color:green;margin-left:34px">+ ${i.supplements.join(", ")}</div>`:""}</div>`).join("")}<hr><div class="tot">TOTAL : ${DA(order.total)}</div>${order.note?`<div style="margin-top:10px;border:1px dashed #ccc;padding:8px;font-size:12px">📝 ${order.note}</div>`:""}</body></html>`);
+    w.document.close();w.print();w.close();
+  };
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:200}}>
+      <div style={{background:"#fff",borderRadius:"20px 20px 0 0",padding:"22px 20px 32px",width:"100%",maxWidth:480,maxHeight:"90vh",overflowY:"auto"}}>
+        <div style={{textAlign:"center",marginBottom:16}}>
+          <div style={{fontSize:11,color:"#6b7280",fontWeight:700,letterSpacing:2,textTransform:"uppercase"}}>Bon de commande</div>
+          <div style={{fontSize:24,fontWeight:900,color:"#111"}}>Table {table}</div>
+          <div style={{fontSize:12,color:"#9ca3af"}}>#{order.id} — {NOW()}</div>
+        </div>
+        <div style={{background:"#f9fafb",borderRadius:12,padding:14,marginBottom:14}}>
+          {order.items.map((item,i)=>(
+            <div key={i} style={{borderBottom:"1px solid #e5e7eb",paddingBottom:10,marginBottom:10}}>
+              <div style={{display:"flex",justifyContent:"space-between"}}>
+                <div>
+                  <span style={{background:"#111",color:"#fff",borderRadius:5,padding:"1px 7px",fontSize:12,fontWeight:800,marginRight:6}}>×{item.qty}</span>
+                  <span style={{fontWeight:700,fontSize:14}}>{item.name}</span>
+                  {item.category&&<span style={{fontSize:11,color:"#9ca3af",marginLeft:5}}>({item.category})</span>}
+                </div>
+                <span style={{fontWeight:800,fontSize:13,color:"#e85d04"}}>{DA(item.qty*item.price)}</span>
+              </div>
+              {item.supplements?.length>0&&<div style={{fontSize:11,color:"#059669",marginLeft:30,marginTop:3}}>+ {item.supplements.join(", ")}</div>}
+            </div>
+          ))}
+          {order.note&&<div style={{background:"#fef9c3",borderRadius:8,padding:"8px 10px",fontSize:12,color:"#854d0e"}}>📝 {order.note}</div>}
+        </div>
+        <div style={{background:"#111",borderRadius:12,padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+          <span style={{color:"#fff",fontWeight:700}}>TOTAL</span>
+          <span style={{color:"#e85d04",fontWeight:900,fontSize:22}}>{DA(order.total)}</span>
+        </div>
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={onClose} style={{flex:1,background:"#f3f4f6",border:"1.5px solid #e5e7eb",borderRadius:10,padding:"12px",fontWeight:700,fontSize:14,cursor:"pointer",color:"#374151"}}>Fermer</button>
+          <button onClick={print} style={{flex:2,background:"#e85d04",border:"none",borderRadius:10,padding:"12px",fontWeight:800,fontSize:14,cursor:"pointer",color:"#fff"}}>🖨️ Imprimer cuisine</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════ ÉCRAN TABLE ═══════════════════════
+function TableScreen({table,order,onBack,onUpdate,onSend}){
+  const [showTicket,setShowTicket]=useState(null);
+  const [note,setNote]=useState(order?.note||"");
+  const [inMenu,setInMenu]=useState(false);
+  const items=order?.items||[];
+  const total=items.reduce((s,i)=>s+i.price*i.qty,0);
+  const count=items.reduce((s,i)=>s+i.qty,0);
+  const catColors=Object.fromEntries(Object.entries(MENU).map(([k,v])=>[k,v.color]));
+  const addItem=item=>{
+    const ex=items.find(i=>i.id===item.id&&JSON.stringify(i.supplements)===JSON.stringify(item.supplements));
+    const next=ex?items.map(i=>i.id===item.id&&JSON.stringify(i.supplements)===JSON.stringify(item.supplements)?{...i,qty:i.qty+item.qty}:i):[...items,item];
+    onUpdate(table,{items:next,note,total:next.reduce((s,i)=>s+i.price*i.qty,0)});
+  };
+  const removeItem=idx=>{const next=items.filter((_,i)=>i!==idx);onUpdate(table,{items:next,note,total:next.reduce((s,i)=>s+i.price*i.qty,0)});};
+  const changeQty=(idx,d)=>{const next=items.map((item,i)=>i===idx?{...item,qty:Math.max(1,item.qty+d)}:item);onUpdate(table,{items:next,note,total:next.reduce((s,i)=>s+i.price*i.qty,0)});};
+  const handleSend=()=>{const o={id:orderCounter++,items,total,note};onSend(table,o);setShowTicket(o);setNote("");};
+  if(inMenu) return <MenuScreen cartItems={items} onAdd={addItem} onDone={()=>setInMenu(false)}/>;
+  return(
+    <div style={{background:"#f8fafc",minHeight:"100vh",maxWidth:480,margin:"0 auto",display:"flex",flexDirection:"column"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"14px 12px 14px 8px",background:"#fff",borderBottom:"1px solid #e5e7eb",position:"sticky",top:0,zIndex:10}}>
+        <button onClick={onBack} style={{background:"none",border:"none",fontSize:22,cursor:"pointer",color:"#374151",padding:"0 4px"}}>←</button>
+        <div style={{textAlign:"center"}}>
+          <div style={{fontWeight:900,fontSize:18,color:"#111"}}>Table {table}</div>
+          <div style={{fontSize:11,color:"#9ca3af"}}>{count} article{count!==1?"s":""}</div>
+        </div>
+        <div style={{fontWeight:900,fontSize:17,color:"#e85d04"}}>{DA(total)}</div>
+      </div>
+      <div style={{flex:1,overflowY:"auto",padding:"12px 16px"}}>
+        {items.length===0?(
+          <div style={{textAlign:"center",padding:"60px 20px",color:"#d1d5db"}}>
+            <div style={{fontSize:52,marginBottom:12}}>🍽️</div>
+            <div style={{fontSize:16,fontWeight:700}}>Commande vide</div>
+            <div style={{fontSize:13,marginTop:4}}>Appuyez sur "+ Ajouter un article"</div>
+          </div>
+        ):items.map((item,idx)=>(
+          <div key={idx} style={{background:"#fff",borderRadius:12,padding:"12px 14px",marginBottom:10,boxShadow:"0 1px 4px rgba(0,0,0,.06)",display:"flex",alignItems:"flex-start",gap:10}}>
+            <div style={{width:8,height:8,borderRadius:"50%",background:catColors[item.category]||"#ccc",marginTop:6,flexShrink:0}}/>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontWeight:700,fontSize:14,color:"#111"}}>{item.name}</div>
+              <div style={{fontSize:11,color:"#9ca3af"}}>{item.category}</div>
+              {item.supplements?.length>0&&<div style={{fontSize:11,color:"#059669",marginTop:2}}>+ {item.supplements.join(", ")}</div>}
+            </div>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
+              <div style={{fontWeight:800,fontSize:14,color:catColors[item.category]||"#111"}}>{DA(item.price*item.qty)}</div>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <button onClick={()=>changeQty(idx,-1)} style={{width:28,height:28,borderRadius:7,border:"1.5px solid #e5e7eb",background:"#f9fafb",cursor:"pointer",fontWeight:800,fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>−</button>
+                <span style={{fontWeight:800,minWidth:18,textAlign:"center"}}>{item.qty}</span>
+                <button onClick={()=>changeQty(idx,1)} style={{width:28,height:28,borderRadius:7,border:"1.5px solid #e5e7eb",background:"#f9fafb",cursor:"pointer",fontWeight:800,fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>+</button>
+                <button onClick={()=>removeItem(idx)} style={{color:"#ef4444",background:"none",border:"none",cursor:"pointer",fontSize:16,padding:0}}>🗑</button>
+              </div>
+            </div>
+          </div>
+        ))}
+        <textarea value={note} onChange={e=>{setNote(e.target.value);onUpdate(table,{items,note:e.target.value,total});}}
+          placeholder="📝 Note pour la cuisine..." rows={2}
+          style={{width:"100%",padding:"10px 12px",borderRadius:10,border:"1.5px solid #e5e7eb",fontSize:13,resize:"none",boxSizing:"border-box",outline:"none",marginTop:8}}/>
+      </div>
+      <div style={{padding:"12px 16px",borderTop:"1px solid #e5e7eb",background:"#fff"}}>
+        <button onClick={()=>setInMenu(true)} style={{width:"100%",padding:"14px",borderRadius:12,border:"2px dashed #e5e7eb",background:"#f9fafb",color:"#374151",fontSize:15,fontWeight:700,cursor:"pointer",marginBottom:items.length>0?10:0}}>
+          ＋ Ajouter un article
+        </button>
+        {items.length>0&&(
+          <div style={{background:"#111",borderRadius:12,padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div>
+              <div style={{fontSize:11,color:"#9ca3af"}}>Total commande</div>
+              <div style={{fontWeight:900,fontSize:20,color:"#e85d04"}}>{DA(total)}</div>
+            </div>
+            <button onClick={handleSend} style={{background:"#e85d04",color:"#fff",border:"none",borderRadius:10,padding:"12px 22px",fontWeight:800,fontSize:15,cursor:"pointer"}}>🍴 Envoyer cuisine</button>
+          </div>
+        )}
+      </div>
+      {showTicket&&<KitchenTicket table={table} order={showTicket} onClose={()=>setShowTicket(null)}/>}
+    </div>
+  );
+}
+
+// ═══════════════════════ APP ═══════════════════════
+function App(){
+  const [unlocked,setUnlocked]=useState(false);
+  const [screen,setScreen]=useState("tables");
+  const [activeTable,setActive]=useState(null);
+  const [orders,setOrders]=useState({});
+  const [sentOrders,setSent]=useState({});
+  if(!unlocked) return <PinScreen onUnlock={()=>setUnlocked(true)}/>;
+  const updateOrder=(t,data)=>setOrders(p=>({...p,[t]:data}));
+  const sendKitchen=(t,order)=>{setSent(p=>({...p,[t]:[...(p[t]||[]),order]}));setOrders(p=>({...p,[t]:{items:[],note:"",total:0}}));};
+  if(screen==="table") return <TableScreen table={activeTable} order={orders[activeTable]} onBack={()=>setScreen("tables")} onUpdate={updateOrder} onSend={sendKitchen}/>;
+  const dayTotal=Object.values(sentOrders).flat().reduce((s,o)=>s+o.total,0);
+  return(
+    <div style={{background:"#f8fafc",minHeight:"100vh",maxWidth:480,margin:"0 auto"}}>
+      <div style={{background:"#111",padding:"20px 20px 16px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end"}}>
+          <div>
+            <div style={{fontSize:11,color:"#9ca3af",letterSpacing:2,textTransform:"uppercase",fontWeight:600}}>Le goût qui te régale</div>
+            <div style={{fontSize:26,fontWeight:900,color:"#fff",lineHeight:1.1}}>ZAIR GLACE</div>
+            <div style={{fontSize:11,color:"#e85d04",fontWeight:600,marginTop:2}}>🍕 GLACE · FOOD · CRÊPE · FAIT MAISON</div>
+          </div>
+          <div style={{textAlign:"right"}}>
+            <div style={{fontSize:11,color:"#6b7280"}}>Recette du jour</div>
+            <div style={{fontSize:18,fontWeight:900,color:"#e85d04"}}>{DA(dayTotal)}</div>
+            <button onClick={()=>setUnlocked(false)} style={{marginTop:6,fontSize:11,color:"#6b7280",background:"none",border:"none",cursor:"pointer"}}>🔒 Verrouiller</button>
+          </div>
+        </div>
+      </div>
+      <div style={{padding:16}}>
+        <div style={{fontSize:12,fontWeight:700,color:"#9ca3af",letterSpacing:1,textTransform:"uppercase",marginBottom:12}}>Sélectionner une table</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12}}>
+          {TABLES.map(t=>{
+            const o=orders[t],s=sentOrders[t],has=o?.items?.length>0,sent=s?.length>0;
+            return(
+              <button key={t} onClick={()=>{setActive(t);setScreen("table");}}
+                style={{borderRadius:16,padding:"18px 10px",cursor:"pointer",textAlign:"center",outline:"none",border:`2px solid ${has?"#e85d04":sent?"#d1fae5":"#e5e7eb"}`,background:has?"#fff7ed":sent?"#f0fdf4":"#fff"}}>
+                <div style={{fontSize:28,marginBottom:4}}>{has?"🔴":sent?"✅":"⬜"}</div>
+                <div style={{fontWeight:900,fontSize:18,color:"#111"}}>Table {t}</div>
+                {has&&<div style={{fontSize:11,color:"#e85d04",fontWeight:700,marginTop:3}}>En cours — {DA(o.total)}</div>}
+                {!has&&sent&&<div style={{fontSize:11,color:"#059669",fontWeight:700,marginTop:3}}>{s.length} envoyée{s.length>1?"s":""}</div>}
+                {!has&&!sent&&<div style={{fontSize:11,color:"#d1d5db",marginTop:3}}>Libre</div>}
+              </button>
+            );
+          })}
+        </div>
+        <div style={{display:"flex",gap:16,marginTop:20,padding:"12px 14px",background:"#f9fafb",borderRadius:12}}>
+          <span style={{fontSize:12,color:"#6b7280"}}>🔴 En cours</span>
+          <span style={{fontSize:12,color:"#6b7280"}}>✅ Envoyé cuisine</span>
+          <span style={{fontSize:12,color:"#6b7280"}}>⬜ Libre</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
